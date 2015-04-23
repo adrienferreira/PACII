@@ -7,14 +7,16 @@
 
 #define DEBUG 42
 #define MAXLINE 256
+#define MAXFILENAME 256
 
 #define H_CONTTYPE "Content-Type: "
 #define MIME_MULT "multipart"
 #define DEFAULT_EXT "txt"
+#define MAIL_BASE_FOLDER "./obj"
 
 #define SERVER_OK "+OK"
 #define SERVER_ERR "-ERR"
-#define CLRF "\r\n"
+#define CRLF "\r\n"
 #define END "."
 
 typedef struct mime{

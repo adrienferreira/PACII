@@ -1,5 +1,7 @@
 #include <common-pop.h>
 
+void r_processMail(pop*p, FILE*fSo, char*mailNbr,  int depth);
+
 int isServerOk(FILE * fSo)
 {
 	char buff[MAXLINE];
@@ -36,7 +38,7 @@ void sendCmd(FILE * fSo, char *cmd, char *param1, char *param2)
 		fwrite(param2, sizeof(char), strlen(param2), fSo);
 	}
 
-	fwrite(CLRF, sizeof(char), strlen(CLRF), fSo);
+	fwrite(CRLF, sizeof(char), strlen(CRLF), fSo);
 	#endif
 }
 
@@ -70,15 +72,15 @@ void sendTop(FILE * fSo, char *mailNbr)
 	sendCmd(fSo, "TOP", mailNbr, "0");
 }
 
-void saveSimpleContent(FILE*fSo, char*mailNbr,char* canonical)
+void saveSimpleContent(FILE*fSo, char*folderName, char*fileName,char* canonical)
 {
 	char buff[MAXLINE];
-	char *fileName;
+	char fullPath[MAXFILENAME];
+	int lenFN;
 	FILE *dest;
 
-	fileName = (char*)malloc(strlen(mailNbr)+strlen(canonical)+1+1);
-	sprintf(fileName,"%s.%s",mailNbr,canonical);
-	dest=fopen(fileName, "w+");
+	sprintf(fullPath,"%s/%s/%s.%s",MAIL_BASE_FOLDER, folderName, fileName, canonical);
+	dest=fopen(fullPath, "w+");
 
 	while(fgets(buff, MAXLINE, fSo) && !strncmp(buff,END,strlen(END)))
 		fwrite(buff,sizeof(char),MAXLINE,dest);
@@ -86,37 +88,63 @@ void saveSimpleContent(FILE*fSo, char*mailNbr,char* canonical)
 	free(fileName);
 }
 
-//TODO content-type abscent => txt
-void saveMixedContent(FILE*fSo, char*mailNbr, char*boundary)
+
+void r_processMail(pop*p, FILE*fSo, char*mailNbr,  int depth)
 {
 	char buff[MAXLINE];
-	char *fileName;
-	FILE *dest;
+	char popBound[MAXLINE];
+	int isMultipart;
+	int endOfHeader, endOfMail, boundFound;	
+	char *mime, *canonical, *boundary;
+	char *folderName;
 	
-	char *mime, *canonical, *unused;
-
-	mkdir(mailNbr, S_IRUSR | S_IWUSR);
-
-	fileName = (char*)malloc(strlen(mailNbr)+strlen(canonical)+1+1);
-	sprintf(fileName,"%s.%s",mailNbr,canonical);
-	dest=fopen(fileName, "w+");
-
-	while(fgets(buff, MAXLINE, fSo) && !strncmp(buff,END,strlen(END)))
+	endOfHeader =0;
+	endOfMail = 0;
+	boundFound=0;
+	folderName = "";
+	
+	while(!endOfHeader)
 	{
-		if(strncmp(buff,"--",2) && strncmp(buff+2,boundary,strlen(boundary))){
-			fgets(buff, MAXLINE, fSo) && !strncmp(buff,END,strlen(END));
-			if(strncmp(buff,H_CONTTYPE,strlen(H_CONTTYPE))){
-				
-			}
-		}
+		fgets(buff, MAXLINE, fSo);
+		printf("%s\n",buff);
+		endOfHeader = !strncmp(buff,CRLF,strlen(CRLF));
+
+		if(!strncmp(buff,H_CONTTYPE,strlen(H_CONTTYPE)))
+			processContentType(p, buff, &mime, &canonical, &boundary);
 	}
-	
-	free(fileName);
-	
-/*
-	 if(mkdir(, mode_t mode))
-	 	fatal("Création dossier");
-*/
+
+	while(!endOfMail)
+	{
+		if(!depth && boundary)
+		{
+			sprintf(popBound,"--%s--",boundary);
+			folderName = mailNbr;
+		
+			do{
+				fgets(buff, MAXLINE, fSo);
+				boundFound = !strncmp(buff,popBound,strlen(popBound)-2);
+				endOfMail= boundFound && !strncmp(buff,popBound,strlen(popBound));
+			}
+			while(!boundFound);
+
+			if(!endOfMail)
+				r_processMail(p,fSo,mailNbr,depth+1);
+		}
+		
+		if(!endOfMail)
+			saveSimpleContent(fSo, folderName, mailNbr, canonical);
+	}
+
+	free(mime);
+	free(canonical);
+	free(boundary);
+
+}
+
+void processMail(pop*p, FILE*fSo, char*mailNbr){
+	char buff[MAXLINE];
+	r_processMail(p,fSo,mailNbr,0);
+	while(fgets(buff, MAXLINE, fSo)&& !strncmp(buff,END,strlen(END)));
 }
 
 //TODO free regex, malloc, strdup
@@ -130,10 +158,16 @@ void processContentType(pop*p, char*search, char**mime, char**canonical, char**b
 	regex_t preg;
 	regmatch_t matches[NB_PAR];
 	
+	int isMultipart;
 	char* startMime, *startBoudary;
 	int sizeMime, sizeBoundary;
 	
+	isMultipart = 0;
 	regcomp (&preg, strRegex, REG_EXTENDED);
+	
+	*mime = NULL;
+	*canonical=NULL;
+	*boundary=NULL;
 	
 	if(!regexec(&preg, search, NB_PAR, matches, 0))
 	{

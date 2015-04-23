@@ -57,44 +57,6 @@ void txtList(FILE*fSo)
 	while(endOfHeader);
 }
 
-void txtRetr(pop*p,FILE*fSo,char*mailNbr)
-{
-	int ret;
-	char buff[MAXLINE];
-	int endOfHeader;
-	
-	char *mime, *canonical, *boundary;
-	
-	sendRetr(fSo,mailNbr);
-	ret = isServerOk(fSo);
-	endOfHeader=0;
-
-	mime=NULL;
-	canonical = NULL;
-	boundary = NULL;
-
-	if(!ret)fatal("RETR échoue");
-
-	while(!endOfHeader)
-	{
-		fgets(buff, MAXLINE, fSo);
-		printf("%s\n",buff);
-		endOfHeader = !strncmp(buff,CLRF,strlen(CLRF));
-
-		if(!strncmp(buff,H_CONTTYPE,strlen(H_CONTTYPE)))
-			processContentType(p, buff, &mime, &canonical, &boundary);
-	}
-	
-	if(canonical)
-		saveSimpleContent(fSo, mailNbr, canonical);
-	else
-		saveMixedContent(fSo, mailNbr, boundary);
-
-	free(mime);
-	free(canonical);
-	free(boundary);
-}
-
 void txtQuit(FILE*fSo)
 {
 	int ret;
@@ -104,3 +66,5 @@ void txtQuit(FILE*fSo)
 
 	exit(ret?EXIT_SUCCESS:EXIT_FAILURE);
 }
+
+ void txtRetr(pop*p,FILE*fSo,char*mailNbr){}

@@ -14,4 +14,4 @@ mimes-pop.o : src/mimes-pop.c include/mimes-pop.h include/common-pop.h
 	gcc -c src/mimes-pop.c -o obj/mimes-pop.o -Iinclude
 
 clean :
-	rm pop;	rm *~;	rm src/*~;	rm include/*~;	rm bin/*;	rm obj/*;
+	rm pop;	rm *~;	rm src/*~;	rm include/*~;	rm bin/*;	rm obj/*o;

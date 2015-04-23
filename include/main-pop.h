@@ -8,5 +8,6 @@ extern void sendQuit(FILE * fSo);
 extern void sendRetr(FILE * fSo, char *mailNbr);
 extern void sendTop(FILE * fSo, char *mailNbr);
 extern void processContentType(pop*p, char*search, char**mime, char**canonical, char**boundary);
-extern void saveSimpleContent(FILE*fSo, char*mailNbr,char* canonical);
-extern void saveMixedContent(FILE*fSo, char*mailNbr, char*boundary);
+
+extern void saveSimpleContent(FILE*fSo, char*folderName, char*fileName,char* canonical);
+extern void processMail(pop*p, FILE*fSo, char*mailNbr);
