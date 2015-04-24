@@ -16,7 +16,7 @@
 
 #define SERVER_OK "+OK"
 #define SERVER_ERR "-ERR"
-#define CRLF "\r\n"
+#define CRLF "\n"
 #define END "."
 
 typedef struct mime{

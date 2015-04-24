@@ -82,10 +82,8 @@ void saveSimpleContent(FILE*fSo, char*folderName, char*fileName,char* canonical)
 	sprintf(fullPath,"%s/%s/%s.%s",MAIL_BASE_FOLDER, folderName, fileName, canonical);
 	dest=fopen(fullPath, "w+");
 
-	while(fgets(buff, MAXLINE, fSo) && !strncmp(buff,END,strlen(END)))
-		fwrite(buff,sizeof(char),MAXLINE,dest);
-	
-	free(fileName);
+	while(fgets(buff, MAXLINE, fSo) && strncmp(buff,CRLF,strlen(CRLF)))
+		fwrite(buff,sizeof(char),strlen(buff),dest);
 }
 
 
@@ -127,12 +125,16 @@ void r_processMail(pop*p, FILE*fSo, char*mailNbr,  int depth)
 			}
 			while(!boundFound);
 
-			if(!endOfMail)
+			if(!endOfMail){
 				r_processMail(p,fSo,mailNbr,depth+1);
+				continue;
+			}
 		}
 		
-		if(!endOfMail)
+		if(!endOfMail){
 			saveSimpleContent(fSo, folderName, mailNbr, canonical);
+			break;
+		}
 	}
 
 	free(mime);
@@ -152,7 +154,7 @@ void processMail(pop*p, FILE*fSo, char*mailNbr){
 //TODO const char* strRegex, const inutile chaine non mutable
 void processContentType(pop*p, char*search, char**mime, char**canonical, char**boundary)
 {
-	const char* strRegex ="^Content-Type: ([-0-9A-Za-z\\/\\+\\.]+);(.*boundary=\"(.*)\")?";
+	const char* strRegex ="^Content-Type: ([-0-9A-Za-z\\/\\+\\.]+)(.*boundary=\"(.*)\")?";
 	const int NB_PAR = 3+1;
 	
 	regex_t preg;
@@ -205,12 +207,11 @@ int main(int argc, char **argv)
 	p.first_mime=NULL;
 	
 	initMimes(fdopen(open("/etc/mime.types", O_RDONLY), "r"),&p);
-	printf("%s\n",getCanonical(p.first_mime,"image/png"));
 
 	// so = InitConnexion(argv[1],argv[2]);
-	so = open("scenario.pop", O_RDONLY);
+	so = open("./obj/scenario1.pop", O_RDONLY);
 	fSo = fdopen(so, "r");
-	txtRetr(&p,fSo,"1");
+	processMail(&p,fSo,"1");
 
 	//txtQuit(fSo);
 
