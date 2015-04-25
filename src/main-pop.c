@@ -1,6 +1,6 @@
 #include <common-pop.h>
 
-void r_processMail(pop*p, FILE*fSo, char*mailNbr,  int depth);
+void r_processMail(pop*p, FILE*fSo, char*paramFolderName, char*mailNbr,  int depth);
 
 int isServerOk(FILE * fSo)
 {
@@ -43,33 +43,33 @@ void sendCmd(FILE * fSo, char *cmd, char *param1, char *param2)
 }
 
 void sendUser(FILE * fSo, char *name){
-	sendCmd(fSo, "USER", name, NULL);
+	sendCmd(fSo, CMD_USER, name, NULL);
 }
 
 void sendPass(FILE * fSo, char *pass){
-	sendCmd(fSo, "PASS", pass, NULL);
+	sendCmd(fSo, CMD_PASS, pass, NULL);
 }
 
 void sendList(FILE * fSo){
-	sendCmd(fSo, "LIST", NULL, NULL);
+	sendCmd(fSo, CMD_LIST, NULL, NULL);
 }
 
 void sendQuit(FILE * fSo){
-	sendCmd(fSo, "QUIT", NULL, NULL);
+	sendCmd(fSo, CMD_QUIT, NULL, NULL);
 }
 
 void sendRetr(FILE * fSo, char *mailNbr)
 {
 	if(!atoi(mailNbr))
 		fatal("Numéro de mail invalide");
-	sendCmd(fSo, "RETR", mailNbr, NULL);
+	sendCmd(fSo, CMD_RETR, mailNbr, NULL);
 }
 
 void sendTop(FILE * fSo, char *mailNbr)
 {
 	if(!atoi(mailNbr))
 		fatal("Numéro de mail invalide");
-	sendCmd(fSo, "TOP", mailNbr, "0");
+	sendCmd(fSo, CMD_TOP, mailNbr, "0");
 }
 
 void saveSimpleContent(FILE*fSo, char*folderName, char*fileName,char* canonical)
@@ -87,7 +87,7 @@ void saveSimpleContent(FILE*fSo, char*folderName, char*fileName,char* canonical)
 }
 
 
-void r_processMail(pop*p, FILE*fSo, char*mailNbr,  int depth)
+void r_processMail(pop*p, FILE*fSo, char*paramFolderName, char*mailNbr,  int depth)
 {
 	char buff[MAXLINE];
 	char popBound[MAXLINE];
@@ -99,7 +99,7 @@ void r_processMail(pop*p, FILE*fSo, char*mailNbr,  int depth)
 	endOfHeader =0;
 	endOfMail = 0;
 	boundFound=0;
-	folderName = "";
+	folderName = paramFolderName;
 	
 	while(!endOfHeader)
 	{
@@ -126,7 +126,7 @@ void r_processMail(pop*p, FILE*fSo, char*mailNbr,  int depth)
 			while(!boundFound);
 
 			if(!endOfMail){
-				r_processMail(p,fSo,mailNbr,depth+1);
+				r_processMail(p,fSo,folderName,mailNbr,depth+1);
 				continue;
 			}
 		}
@@ -145,7 +145,7 @@ void r_processMail(pop*p, FILE*fSo, char*mailNbr,  int depth)
 
 void processMail(pop*p, FILE*fSo, char*mailNbr){
 	char buff[MAXLINE];
-	r_processMail(p,fSo,mailNbr,0);
+	r_processMail(p,fSo,NULL,mailNbr,0);
 	while(fgets(buff, MAXLINE, fSo)&& !strncmp(buff,END,strlen(END)));
 }
 
@@ -202,16 +202,57 @@ int main(int argc, char **argv)
 	int so;
 	FILE *fSo;
 	pop p;
+	int quit;
+	char saisie[MAXLINE];
+	char param[MAXLINE];
 
 	p.last_mime=NULL;
 	p.first_mime=NULL;
+	quit = 0;
 	
 	initMimes(fdopen(open("/etc/mime.types", O_RDONLY), "r"),&p);
 
 	// so = InitConnexion(argv[1],argv[2]);
 	so = open("./obj/scenario1.pop", O_RDONLY);
 	fSo = fdopen(so, "r");
-	processMail(&p,fSo,"1");
+	//processMail(&p,fSo,"1");
+
+	for(;;)
+	{
+		memset(saisie,0,MAXLINE);
+		memset(param,0,MAXLINE);
+		printf("ol> ");
+		fgets (saisie, MAXLINE , stdin);
+
+		if(!strncasecmp(saisie, CMD_USER, strlen(CMD_USER))){
+			sscanf(saisie,"user %s",&param);
+			printf("User : %s\n",param);
+			txtUser(fSo, param);
+		}
+		if(!strncasecmp(saisie, CMD_PASS, strlen(CMD_PASS))){
+			sscanf(saisie,CMD_PASS" %s",param);
+			printf("Pass : %s\n",param);
+			txtPass(fSo, param);
+		}
+		if(!strncasecmp(saisie, CMD_LIST, strlen(CMD_LIST))){
+			printf("List\n");
+			txtList(fSo);
+		}
+		if(!strncasecmp(saisie, CMD_TOP, strlen(CMD_TOP))){
+			sscanf(saisie,CMD_TOP" %s, 0",param);
+			printf("Top : %s\n",param);
+			txtTop(fSo,param);
+		}
+		if(!strncasecmp(saisie, CMD_QUIT, strlen(CMD_QUIT))){
+			printf("Quit\n");
+			txtQuit(fSo);
+		}
+		if(!strncasecmp(saisie, CMD_RETR, strlen(CMD_RETR))){
+			sscanf(saisie,CMD_RETR" %s",param);
+			printf("Retr : %s\n",param);
+			txtRetr(&p,fSo,param);
+		}
+	}
 
 	//txtQuit(fSo);
 

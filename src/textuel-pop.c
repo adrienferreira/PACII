@@ -67,4 +67,4 @@ void txtQuit(FILE*fSo)
 	exit(ret?EXIT_SUCCESS:EXIT_FAILURE);
 }
 
- void txtRetr(pop*p,FILE*fSo,char*mailNbr){}
+void txtRetr(pop*p,FILE*fSo,char*mailNbr){}

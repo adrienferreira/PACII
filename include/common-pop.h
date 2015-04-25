@@ -19,6 +19,13 @@
 #define CRLF "\n"
 #define END "."
 
+#define CMD_USER "USER"
+#define CMD_PASS "PASS"
+#define CMD_LIST "LIST"
+#define CMD_TOP  "TOP"
+#define CMD_QUIT "QUIT"
+#define CMD_RETR "RETR"
+
 typedef struct mime{
 	char* mimetype;
 	char* canonical;
