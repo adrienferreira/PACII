@@ -54,7 +54,7 @@ void txtList(FILE*fSo)
 		printf("%s\n",buff);
 		endOfHeader = !strncmp(buff,END,strlen(END));
 	}
-	while(endOfHeader);
+	while(!endOfHeader);
 }
 
 void txtQuit(FILE*fSo)
@@ -67,4 +67,17 @@ void txtQuit(FILE*fSo)
 	exit(ret?EXIT_SUCCESS:EXIT_FAILURE);
 }
 
-void txtRetr(pop*p,FILE*fSo,char*mailNbr){}
+void txtRetr(pop*p,FILE*fSo,char*mailNbr)
+{
+	int ret;
+	char buff[MAXLINE];
+	int endOfHeader;
+
+	sendList(fSo);
+	ret = isServerOk(fSo);
+
+	if(!ret)fatal("LIST échoue");
+
+	processMail(p, fSo, mailNbr);
+
+}

@@ -53,7 +53,8 @@ void clickUserPass(pop*p,FILE*fSo,char*user,char*pass)
 				XUnmapWindow(dis, wins[W_PASS]);
 				XUnmapWindow(dis, wins[W_VALI]);
 				XUnmapWindow(dis, wins[W_ERRO]);
-				XMoveResizeWindow(dis, wins[W_MAIN], 1, 1, MAINW_WIDTH, MAINW_HEIGHT);//TODO ancienne position
+				//TODO ancienne position
+				XMoveResizeWindow(dis, wins[W_MAIN], 1, 1, MAINW_WIDTH, MAINW_HEIGHT);
 				clicList(p,fSo);
 			}
 		}

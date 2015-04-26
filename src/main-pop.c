@@ -75,15 +75,28 @@ void sendTop(FILE * fSo, char *mailNbr)
 void saveSimpleContent(FILE*fSo, char*folderName, char*fileName,char* canonical)
 {
 	char buff[MAXLINE];
-	char fullPath[MAXFILENAME];
+	char relPath[MAXFILENAME];
+	char*c;
 	int lenFN;
 	FILE *dest;
 
-	sprintf(fullPath,"%s/%s/%s.%s",MAIL_BASE_FOLDER, folderName, fileName, canonical);
-	dest=fopen(fullPath, "w+");
+	c = canonical?canonical:DEFAULT_EXT;
+
+	if(!folderName){
+		sprintf(relPath,"%s/%s.%s",MAIL_BASE_FOLDER, fileName, c);
+	}
+	else{
+		sprintf(relPath,"%s/%s",MAIL_BASE_FOLDER, folderName);
+		mkdir(relPath, 755);
+		sprintf(relPath,"%s/%s/%s.%s",MAIL_BASE_FOLDER, folderName, fileName, c);
+	}
+
+	dest=fopen(relPath, "w+");
 
 	while(fgets(buff, MAXLINE, fSo) && strncmp(buff,CRLF,strlen(CRLF)))
 		fwrite(buff,sizeof(char),strlen(buff),dest);
+		
+	fclose(dest);
 }
 
 
@@ -99,8 +112,11 @@ void r_processMail(pop*p, FILE*fSo, char*paramFolderName, char*mailNbr,  int dep
 	endOfHeader =0;
 	endOfMail = 0;
 	boundFound=0;
+	canonical=NULL;
+	boundary=NULL;
+	mime=NULL;
 	folderName = paramFolderName;
-	
+
 	while(!endOfHeader)
 	{
 		fgets(buff, MAXLINE, fSo);
@@ -196,7 +212,7 @@ void processContentType(pop*p, char*search, char**mime, char**canonical, char**b
 
 	regfree(&preg);
 }
-
+/*
 int main(int argc, char **argv)
 {
 	int so;
@@ -213,7 +229,7 @@ int main(int argc, char **argv)
 	initMimes(fdopen(open("/etc/mime.types", O_RDONLY), "r"),&p);
 
 	// so = InitConnexion(argv[1],argv[2]);
-	so = open("./obj/scenario1.pop", O_RDONLY);
+	so = open("./obj/scenario4.pop", O_RDONLY);
 	fSo = fdopen(so, "r");
 	//processMail(&p,fSo,"1");
 
@@ -222,10 +238,11 @@ int main(int argc, char **argv)
 		memset(saisie,0,MAXLINE);
 		memset(param,0,MAXLINE);
 		printf("ol> ");
-		fgets (saisie, MAXLINE , stdin);
+		//fgets (saisie, MAXLINE , stdin);
+		strcpy(saisie,"RETR 1");
 
 		if(!strncasecmp(saisie, CMD_USER, strlen(CMD_USER))){
-			sscanf(saisie,"user %s",&param);
+			sscanf(saisie,"user %s",param);
 			printf("User : %s\n",param);
 			txtUser(fSo, param);
 		}
@@ -251,6 +268,7 @@ int main(int argc, char **argv)
 			sscanf(saisie,CMD_RETR" %s",param);
 			printf("Retr : %s\n",param);
 			txtRetr(&p,fSo,param);
+			exit(1);
 		}
 	}
 
@@ -258,4 +276,4 @@ int main(int argc, char **argv)
 
 	//printf("%d\n", atoi("0"));
 	exit(EXIT_SUCCESS);
-}
+}*/
