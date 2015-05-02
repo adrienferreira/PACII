@@ -77,7 +77,6 @@ void saveSimpleContent(FILE*fSo, char*folderName, char*fileName,char* canonical)
 	char buff[MAXLINE];
 	char relPath[MAXFILENAME];
 	char*c;
-	int lenFN;
 	FILE *dest;
 
 	c = canonical?canonical:DEFAULT_EXT;
@@ -102,9 +101,9 @@ void saveSimpleContent(FILE*fSo, char*folderName, char*fileName,char* canonical)
 
 void r_processMail(pop*p, FILE*fSo, char*paramFolderName, char*mailNbr,  int depth)
 {
+	mails*m;
 	char buff[MAXLINE];
 	char popBound[MAXLINE];
-	int isMultipart;
 	int endOfHeader, endOfMail, boundFound;	
 	char *mime, *canonical, *boundary;
 	char *folderName;
@@ -124,7 +123,16 @@ void r_processMail(pop*p, FILE*fSo, char*paramFolderName, char*mailNbr,  int dep
 		endOfHeader = !strncmp(buff,CRLF,strlen(CRLF));
 
 		if(!strncmp(buff,H_CONTTYPE,strlen(H_CONTTYPE)))
+		{
 			processContentType(p, buff, &mime, &canonical, &boundary);
+			for(m=p->first_mail; m; m=m->next){
+				if(!strncmp(m->id, mailNbr, strlen(mailNbr)))
+				{
+					m->mime=mime ? strdup(mime) : NULL;
+					m->canonical = canonical ? strdup(canonical) : NULL;
+				}
+			}
+		}
 	}
 
 	while(!endOfMail)
@@ -154,7 +162,7 @@ void r_processMail(pop*p, FILE*fSo, char*paramFolderName, char*mailNbr,  int dep
 	}
 
 	free(mime);
-	free(canonical);
+	//free(canonical);
 	free(boundary);
 
 }
@@ -176,11 +184,9 @@ void processContentType(pop*p, char*search, char**mime, char**canonical, char**b
 	regex_t preg;
 	regmatch_t matches[NB_PAR];
 	
-	int isMultipart;
 	char* startMime, *startBoudary;
 	int sizeMime, sizeBoundary;
 	
-	isMultipart = 0;
 	regcomp (&preg, strRegex, REG_EXTENDED);
 	
 	*mime = NULL;
@@ -221,7 +227,9 @@ int main(int argc, char **argv)
 	int quit;
 	char saisie[MAXLINE];
 	char param[MAXLINE];
-
+	
+	p.first_mail=NULL;
+	p.last_mail=NULL;
 	p.last_mime=NULL;
 	p.first_mime=NULL;
 	quit = 0;

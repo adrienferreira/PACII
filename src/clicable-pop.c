@@ -1,16 +1,23 @@
 // TODO expose redraw, car XSelectInput ExposureMask
 //change focus, cursor XC_xterm 
 //largeur de la chaine supérieur taille fenetre
+//contexte SaisieMdp, overview, consultation
 #include <common-pop.h>
 
 
 void putStringWindow(Window*w, char*str)
 {
-	if( str)
+	Window root;
+    int x, y;
+    unsigned int width, height;
+    unsigned int border_width;
+    unsigned int depth;
+	
+	XGetGeometry(dis, *w, &root, &x, &y, &width, &height, &border_width, &depth);
+
+	if(str)
 	{
-		printf("%s\n",str);
-		XUnmapWindow(dis, *w);
-		XMapWindow(dis, *w);
+		XClearArea(dis, *w, x, y, width, height, 0);
 		XDrawString(dis, *w, popGC, 10, 15, str,strlen(str));	
 	}
 }
@@ -33,28 +40,51 @@ int checkUserPassStr(char*user,char*pass)
 	return !errMsg;
 }
 
+
+void emptyUserPassBoxes(void)
+{
+	XUnmapWindow(dis, wins[W_USER]);
+	XMapWindow(dis, wins[W_USER]);
+	XUnmapWindow(dis, wins[W_PASS]);
+	XMapWindow(dis, wins[W_PASS]);
+}
+
+void changeWindowBgColor(Window*w,char*colorName)
+{
+	XColor color;
+
+	XAllocNamedColor(
+		dis,
+		DefaultColormap(dis, DefaultScreen(dis)),			       
+		colorName,
+		&color, &color
+	);
+
+	XSetWindowBackground(dis, *w, color.pixel);
+	
+	XUnmapWindow(dis, *w);
+	XMapWindow(dis, *w);
+}
+
 void clickUserPass(pop*p,FILE*fSo,char*user,char*pass)
 {
-	char* errMsg;	
-	errMsg = NULL;
-	
-
 	if(checkUserPassStr(user,pass))
 	{
 		sendUser(fSo, user);
 		if(!isServerOk(fSo)){
 			putStringWindow(&(wins[W_ERRO]),MSG_WRONG_USR);
+			emptyUserPassBoxes();
 		}else{
 			sendPass(fSo, pass);
 			if(!isServerOk(fSo)){
 				putStringWindow(&(wins[W_ERRO]),MSG_WRONG_PASS);
+				emptyUserPassBoxes();
 			}else{
 				XUnmapWindow(dis, wins[W_USER]);
 				XUnmapWindow(dis, wins[W_PASS]);
 				XUnmapWindow(dis, wins[W_VALI]);
 				XUnmapWindow(dis, wins[W_ERRO]);
-				//TODO ancienne position
-				XMoveResizeWindow(dis, wins[W_MAIN], 1, 1, MAINW_WIDTH, MAINW_HEIGHT);
+				XResizeWindow(dis, wins[W_MAIN], MAINW_WIDTH, MAINW_HEIGHT);
 				clicList(p,fSo);
 			}
 		}
@@ -93,9 +123,8 @@ void getOverviewInfo(FILE*fSo,char**from,char**date)
 void clicList(pop*p,FILE*fSo)
 {
 	int ret;
-	int nbrOW;
+	int fenOvId;
 	char buff[MAXLINE];
-	int endOfHeader;
 	mails*m;
 
 	sendList(fSo);
@@ -107,11 +136,12 @@ void clicList(pop*p,FILE*fSo)
 	{
 		printf("%s\n",buff);
 		m = (mails*)malloc(sizeof(mails));
+		memset(m, 0, sizeof(mails));
 		linkMailEnd(p,m);
 		m->id = strndup(buff,index(buff,' ')-buff);
 	}
 
-	for(m=p->first_mail,nbrOW=0 ; m && nbrOW<NBR_MAX_OW; m=m->next,nbrOW++)
+	for(m=p->first_mail,fenOvId=0 ; m && fenOvId<NBR_MAX_OW; m=m->next,fenOvId++)
 	{
 		sendTop(fSo,(m->id));
 		ret = isServerOk(fSo);
@@ -122,16 +152,42 @@ void clicList(pop*p,FILE*fSo)
 	drawOverview(p);
 }
 
+int getOWFromDateWidth(Window*main)
+{
+	const int MIN_SIZE_WIN = 5;
+
+	Window root;
+    int x, y;
+    unsigned int width, height;
+    unsigned int border_width;
+    unsigned int depth;
+    int calcWidth;
+	
+	XGetGeometry(dis, *main, &root, &x, &y, &width, &height, &border_width, &depth);
+	calcWidth = (width - (4*OW_OFFSET) - OW_ID_WIDTH)/2;
+
+	return calcWidth < MIN_SIZE_WIN ? MIN_SIZE_WIN : calcWidth;
+}
+
+int getOWFromX(int fromDateWidth){
+	return (3*OW_OFFSET) + OW_ID_WIDTH + fromDateWidth;
+}
+
+int getOWFromY(int fromDateWidth, int id){
+	return (id*OW_HEIGHT) + ((1+id)*OW_OFFSET);
+}
+
 void drawOverview(pop*p)
 {
 	mails*m;
 	int fenOvId;
-	Window curW;
 	int fromDateWidth;
+	Cursor hand;		
 	
-	fromDateWidth = (MAINW_WIDTH - (4*OW_OFFSET) - OW_ID_WIDTH)/2;
+	fromDateWidth = getOWFromDateWidth(&(wins[W_MAIN]));
+	hand = XCreateFontCursor (dis, XC_hand2) ;
 	
-	for(m=p->first_mail,fenOvId=0 ; m; m=m->next,fenOvId++)
+	for(m=p->first_mail,fenOvId=0 ; m && fenOvId<NBR_MAX_OW; m=m->next,fenOvId++)
 	{
 		m->ow_id = XCreateSimpleWindow(
 			dis, 
@@ -160,8 +216,8 @@ void drawOverview(pop*p)
 		m->ow_date = XCreateSimpleWindow(
 			dis, 
 			wins[W_MAIN], 
-			(3*OW_OFFSET) + OW_ID_WIDTH + fromDateWidth, 
-			(fenOvId*OW_HEIGHT) + ((1+fenOvId)*OW_OFFSET), 
+			getOWFromX(fromDateWidth), 
+			getOWFromY(fromDateWidth,fenOvId) , 
 			fromDateWidth, 
 			OW_HEIGHT, 
 			0, 
@@ -169,15 +225,47 @@ void drawOverview(pop*p)
 			WhitePixel(dis, 0)
 		);
 		
+		
+		XDefineCursor (dis, m->ow_id, hand);
+		XDefineCursor (dis, m->ow_from, hand);
+		XDefineCursor (dis, m->ow_date, hand);
+		
+		XSelectInput(dis, m->ow_id,  EnterWindowMask |LeaveWindowMask| ButtonPressMask);
+
+		XMapWindow(dis,m->ow_id);
+		XMapWindow(dis,m->ow_from);
+		XMapWindow(dis,m->ow_date);
+		
 		putStringWindow(&(m->ow_id), m->id);
 		putStringWindow(&(m->ow_from), m->from);
 		putStringWindow(&(m->ow_date), m->date);
-		
-		XSelectInput(dis, m->ow_id, ExposureMask | ButtonPressMask);
-		
-		XMapWindow(dis, m->ow_id);
-		XMapWindow(dis, m->ow_from);
-		XMapWindow(dis, m->ow_date);
+	}
+}
+
+void refresh(pop*p)
+{
+	mails*m;
+	int fenOvId;
+	int fromDateWidth;	
+	
+	//TEST
+	//fromDateWidth = getOWFromDateWidth(&(wins[W_MAIN]));
+	//XClearWindow(dis, wins[W_MAIN]);
+	
+	fprintf(stderr,"r");
+	for(m=p->first_mail,fenOvId=0 ; m && fenOvId<NBR_MAX_OW; m=m->next,fenOvId++)
+	{
+		//TEST
+		//XResizeWindow(dis, (m->ow_from), fromDateWidth, OW_HEIGHT);
+		//XMoveResizeWindow(dis, (m->ow_date), getOWFromX(fromDateWidth), getOWFromY(fromDateWidth,fenOvId) ,  fromDateWidth, OW_HEIGHT);
+		//TEST
+		//XDrawString(dis, (m->ow_id), popGC, 10, 15, m->id,strlen(m->id));	
+		//XDrawString(dis, (m->ow_from), popGC, 10, 15, m->from,strlen(m->from));	
+		//XDrawString(dis, (m->ow_date), popGC, 10, 15, m->date,strlen(m->date));
+
+		if(m->cont_win){
+			XDrawString(dis, (m->cont_win), popGC, 10, 15, m->cont_text,strlen(m->cont_text));
+		}
 	}
 }
 
@@ -198,11 +286,54 @@ void fButtonPress(pop*p,FILE*fSo,XButtonEvent * e)
 		
 	for(m=p->first_mail; m; m=m->next)
 	{
-		if(e->window == m->ow_id){
-			if(!(m->is_downloaded)){
+		if(e->window == m->ow_id)
+		{
+			if(!(m->is_downloaded))
+			{
 				m->is_downloaded = 1;
 				processMail(p,fSo,m->id);
-			}			
+				changeWindowBgColor(&(m->ow_id),COLOR_DOWL);
+				XUnmapWindow(dis,(m->ow_id));
+				XMapWindow(dis,(m->ow_id));
+			}
+			else{
+				graphLoadMailContent(m);
+				graphShowMailContent(m);
+			}
+		}
+	}
+}
+
+void fEnter(XEnterWindowEvent *e, pop*p)
+{
+	mails*m;
+
+	fprintf(stderr,"e");
+	for(m=p->first_mail; m; m=m->next)
+	{
+		if(e->window==m->ow_id ||e->window==m->ow_from ||e->window==m->ow_date)
+		{				
+			changeWindowBgColor(&(m->ow_from), COLOR_HOVER);
+			changeWindowBgColor(&(m->ow_date), COLOR_HOVER);
+		}
+
+		if(e->window==m->cont_scrl){
+			printf("Coool\n");
+		}
+	}
+}
+
+void fLeave(XLeaveWindowEvent *e, pop*p)
+{
+	mails*m;
+		
+	fprintf(stderr,"e");
+	for(m=p->first_mail; m; m=m->next)
+	{
+		if(e->window==m->ow_id ||e->window==m->ow_from ||e->window==m->ow_date)
+		{
+			changeWindowBgColor(&(m->ow_from), COLOR_BASE);
+			changeWindowBgColor(&(m->ow_date), COLOR_BASE);
 		}
 	}
 }
@@ -257,14 +388,17 @@ void fKeyPress(pop*p,FILE*fSo,XKeyEvent * e)
 
 int main(int argc,char**argv)
 {
+	XEvent report;
 	int so;
 	FILE*fSo;
 	pop p;
 	
-	p.last_mail=NULL;
 	p.first_mail=NULL;
+	p.last_mail=NULL;
+	p.last_mime=NULL;
+	p.first_mime=NULL;
 	
-	so = open("./obj/scenario5.pop", O_RDONLY);
+	so = open("./scenarios/5.pop", O_RDONLY);
 	fSo = fdopen(so, "r");
 	
 	initMimes(fdopen(open("/etc/mime.types", O_RDONLY), "r"),&p);
@@ -274,71 +408,151 @@ int main(int argc,char**argv)
 	
 	focus = W_USER;
 	dis = XOpenDisplay(NULL);
+	
+	wins[W_MAIN] = XCreateSimpleWindow(dis, RootWindow(dis, 0), 1, 1, 500/*MAINW_WIDTH*/, 120/*MAINW_HEIGHT*/, 0, BlackPixel(dis, 0), BlackPixel(dis, 0));
+	wins[W_USER] = XCreateSimpleWindow(dis, wins[W_MAIN], 5, 5, 490, OW_HEIGHT, 0, BlackPixel(dis, 0), WhitePixel(dis, 0));
+	wins[W_PASS] = XCreateSimpleWindow(dis, wins[W_MAIN], 5, 35, 490, OW_HEIGHT, 0, BlackPixel(dis, 0), WhitePixel(dis, 0));
+	wins[W_ERRO] = XCreateSimpleWindow(dis, wins[W_MAIN], 5, 65, 200, OW_HEIGHT, 0, BlackPixel(dis, 0), WhitePixel(dis, 0));
+	wins[W_VALI] = XCreateSimpleWindow(dis, wins[W_MAIN], 400, 65, 	OW_BUTTON_WIDTH, OW_HEIGHT, 0, BlackPixel(dis, 0), WhitePixel(dis, 0));
+	wins[W_QUIT] = XCreateSimpleWindow(dis, wins[W_MAIN], 0, 0, 	OW_BUTTON_WIDTH, OW_HEIGHT, 0, BlackPixel(dis, 0), WhitePixel(dis, 0));
 
-	wins[W_MAIN] = XCreateSimpleWindow(dis, RootWindow(dis, 0), 1, 1, 500, 120, 0, BlackPixel(dis, 0), BlackPixel(dis, 0));
-	wins[W_USER] = XCreateSimpleWindow(dis, wins[W_MAIN], 5, 5, 490, 25, 0, BlackPixel(dis, 0), WhitePixel(dis, 0));
-	wins[W_PASS] = XCreateSimpleWindow(dis, wins[W_MAIN], 5, 35, 490, 25, 0, BlackPixel(dis, 0), WhitePixel(dis, 0));
-	wins[W_VALI] = XCreateSimpleWindow(dis, wins[W_MAIN], 400, 65, 80, 25, 0, BlackPixel(dis, 0), WhitePixel(dis, 0));
-	wins[W_ERRO] = XCreateSimpleWindow(dis, wins[W_MAIN], 5, 65, 200, 25, 0, BlackPixel(dis, 0), WhitePixel(dis, 0));
-		
 	XSelectInput(dis, wins[W_MAIN], ExposureMask | ButtonPressMask | KeyPressMask);
 	XSelectInput(dis, wins[W_USER], ExposureMask | ButtonPressMask);
 	XSelectInput(dis, wins[W_PASS], ExposureMask | ButtonPressMask);
 	XSelectInput(dis, wins[W_VALI], ExposureMask | ButtonPressMask);
+	XSelectInput(dis, wins[W_QUIT], ExposureMask | ButtonPressMask);
 
-	popGC = XCreateGC(dis, wins[W_USER], 0, NULL);
+	popGC = XDefaultGC(dis, 0);
 	XStoreName(dis, wins[W_MAIN], F_NAME);
+    
+	//XMapWindow(dis, wins[W_MAIN]);
+	//XMapWindow(dis, wins[W_USER]);
+	//XMapWindow(dis, wins[W_PASS]);
+	//XMapWindow(dis, wins[W_VALI]);
+	//XMapWindow(dis, wins[W_ERRO]);
 
-	XMapWindow(dis, wins[W_MAIN]);
-	XMapWindow(dis, wins[W_USER]);
-	XMapWindow(dis, wins[W_PASS]);
-	XMapWindow(dis, wins[W_VALI]);
-	XMapWindow(dis, wins[W_ERRO]);
+	//clicList(&p,fSo);
+	//drawOverview(&p);
+/*
+	XGCValues values_return;
+	XFontStruct *xfs;
+	int l,s,a,d;
+	XCharStruct xcs;
 
-	// XFlush(dis); 
-	while (1)
+	xfs = XQueryFont(dis, XGContextFromGC(popGC));
+	XTextExtents(xfs, " " , 1, &s,&a,&d,&xcs);	
+
+	char txt[2048];
+	strcpy(txt,"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
+    char *token;
+    int curX,curY;
+    char space=' ';
+    int spaceWidth;
+    int curMaxHeight;
+	
+	curX = 0;
+	curY = 0;
+	token = strtok(txt, &space);
+	spaceWidth = xcs.width;
+	curMaxHeight = -1;
+
+	while( token != NULL ) 
+	{
+		XTextExtents(xfs, token, strlen(token) , &s,&a,&d,&xcs);
+
+		if((curX+xcs.width)>MAINW_WIDTH){
+			curX=0;
+			printf("\n");
+			//curY+=xcs.   cur max height
+		}
+				
+		printf("%s",token);
+		printf(" ");
+		curX+=xcs.width + +spaceWidth;
+		token = strtok(NULL, &space);	  
+	}
+*/
+	/*
+		XGCValues values_return;
+		XFontStruct *xfs;
+		int l,s,a,d;
+		XCharStruct xcs;
+
+		xfs = XQueryFont(dis, XGContextFromGC(popGC));
+		XTextExtents(xfs, TXT_CONF, strlen(TXT_CONF) , &s,&a,&d,&xcs);
+		printf("%d\n",xcs.width);
+	*/
+	
+	/*TEST*/
+	struct mail m;
+	m.id="1";
+	m.from="adrien ferreira <adrien.ferreira@upmc.fr>";
+	m.date="30 decembre 1990";
+	m.is_downloaded=1;
+	m.mime="plain/text";
+	m.canonical="asc";
+	m.cont_text=NULL;
+	m.next=NULL;
+	p.first_mail = &m;
+	p.last_mail = &m;
+	graphLoadMailContent(&m);
+	graphShowMailContent(&m);
+	/*TEST*/
+
+	for(;;)
 	{
 		XNextEvent(dis, &report);
 		switch (report.type)
 		{
-		case Expose:
+			case Expose:
 			{
 				XDrawString(dis, wins[W_VALI], popGC, 10,15, TXT_CONF,strlen(TXT_CONF));				
 				XFlush(dis);
-				drawOverview(&p);
-				/*
-				if(report.xexpose.window == wins[W_MAIN]){
-					clicList(&p,fSo);
+				if(report.xexpose.count == 0){
+					refresh(&p);
 				}
-				*/
 				break;
 			}
 
-		case KeyPress:
+			case KeyPress:
 			{
 				fKeyPress(&p,fSo, &(report.xkey));
-
-
+				
 				// Close the program if q is pressed. 
 				if(XLookupKeysym(&report.xkey, 0)== XK_q)
 				{
-					exit(0);
+					if(report.xkey.window==wins[W_MAIN]){
+						exit(EXIT_SUCCESS);
+					}
+					else{
+						XUnmapWindow(dis,report.xkey.window);
+						exit(EXIT_SUCCESS);//@TODO
+					}
 				}
 				break;
-
-				break;
 			}
-		case ButtonPress:
+
+			case ButtonPress:
 			{
 				fButtonPress(&p,fSo,&report.xbutton);
 				printf("button\n");
 				break;
 			}
+			
+			case LeaveNotify: 
+			{
+				//fLeave(&e.xcrossing, &own);
+				printf("leave\n"); 
+				fLeave(&report.xcrossing,&p);
+				break;
+			}
+			case EnterNotify: 
+			{
+				fEnter(&report.xcrossing, &p);
+				break;
+			}
 		}
-		
-		/*case LeaveNotify: {fLeave(&e.xcrossing, &own); break;}
-		case EnterNotify: {fEnter(&e.xcrossing, &own); break;}*/
 	}
 
-	return 0;
+	exit(EXIT_SUCCESS);
 }

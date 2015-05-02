@@ -5,12 +5,15 @@
 #include <string.h>
 #include <regex.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include <sys/mman.h>
 
 #include <X11/Xlib.h> 
 #include <X11/Xutil.h>
 #include <X11/Xos.h> 
 #include <X11/Xatom.h> 
 #include <X11/keysym.h>
+#include <X11/cursorfont.h>
 
 #define DEBUG 42
 #define MAXLINE 256
@@ -40,22 +43,23 @@ typedef struct mime{
 	char* mimetype;
 	char* canonical;
 	struct mime *next;
-}
-mimes;
+}mimes;
 
 typedef struct mail{
 	char* 	id;
 	char* 	from;
 	char*  date;
 	int is_downloaded;
-	mimes* mime;
-	char* mixed_boundary;
+	char* mime;
+	char* canonical;
+	char* cont_text;
 	Window ow_id;
 	Window ow_from;
 	Window ow_date;
+	Window cont_win;
+	Window cont_scrl;
 	struct mail *next;
-}
-mails;
+}mails;
 
 typedef struct {
 	mimes *first_mime;
@@ -69,3 +73,4 @@ typedef struct {
 #include <mimes-pop.h>
 #include <main-pop.h>
 #include <clicable-pop.h>
+#include <graphique-pop.h>

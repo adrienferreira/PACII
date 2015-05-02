@@ -4,9 +4,17 @@
 1 2514
 2 4545
 3 7878
+4 2514
+5 4545
+6 7878 
+7 2514
+8 4545
+9 7878
+10 2514 
+11 4545
 .
 +OK
-From: Jean Charles <fourmaux@l2ti.univ-paris13.fr>
+From: Jean Charles <charles.jj@laposte.net>
 Date: 20 avril 2000
 To: boiteres2004@free.fr
 Subject: Test
@@ -17,7 +25,7 @@ Content-Disposition: inline
 User-Agent: Mutt/1.3.28i
 .
 +OK
-From: Rick Roll <fourmaux@l2ti.univ-paris13.fr>
+From: Benoit Dubois <bebe.du@hotmail.com>
 Date: 30 decembre 1990
 To: boiteres2004@free.fr
 Subject: Test
@@ -28,8 +36,85 @@ Content-Disposition: inline
 User-Agent: Mutt/1.3.28i
 .
 +OK
-From: Toto Soleil <fourmaux@l2ti.univ-paris13.fr>
+From: Jean Yves <sv-y.jean@live.com>
 Date: 22 mars 1966
+To: boiteres2004@free.fr
+Subject: Test
+Message-ID: <20041017191721.GA14860@L2TI.univ-paris13.fr>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="pf9I7BMVVzbSWLtt"
+Content-Disposition: inline
+User-Agent: Mutt/1.3.28i
+.
++OK
+From: Pierre Mahe <fourmaux@l2ti.univ-paris13.fr>
+Date: 22 mars 1966
+To: boiteres2004@free.fr
+Subject: Test
+Message-ID: <20041017191721.GA14860@L2TI.univ-paris13.fr>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="pf9I7BMVVzbSWLtt"
+Content-Disposition: inline
+User-Agent: Mutt/1.3.28i
+.
++OK
+From: Simone Rolland <simiro@laposte.net>
+Date: 6 mars 1999
+To: boiteres2004@free.fr
+Subject: Test
+Message-ID: <20041017191721.GA14860@L2TI.univ-paris13.fr>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="pf9I7BMVVzbSWLtt"
+Content-Disposition: inline
+User-Agent: Mutt/1.3.28i
+.
++OK
+From: Daniel Richard <daniel@yahoo.fr>
+Date: 12 janvier 2015
+To: boiteres2004@free.fr
+Subject: Test
+Message-ID: <20041017191721.GA14860@L2TI.univ-paris13.fr>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="pf9I7BMVVzbSWLtt"
+Content-Disposition: inline
+User-Agent: Mutt/1.3.28i
+.
++OK
+From: Patrick Georges <ggueye@wanadoo.fr>
+Date: 20 septembre 2001
+To: boiteres2004@free.fr
+Subject: Test
+Message-ID: <20041017191721.GA14860@L2TI.univ-paris13.fr>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="pf9I7BMVVzbSWLtt"
+Content-Disposition: inline
+User-Agent: Mutt/1.3.28i
+.
++OK
+From: Gilles Dupont <gilles455@hotmail.fr>
+Date: 01 mai 2014
+To: boiteres2004@free.fr
+Subject: Test
+Message-ID: <20041017191721.GA14860@L2TI.univ-paris13.fr>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="pf9I7BMVVzbSWLtt"
+Content-Disposition: inline
+User-Agent: Mutt/1.3.28i
+.
++OK
+From: Roger Cher <cher.roro@laposte.fr>
+Date: 9 aout 1994
+To: boiteres2004@free.fr
+Subject: Test
+Message-ID: <20041017191721.GA14860@L2TI.univ-paris13.fr>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="pf9I7BMVVzbSWLtt"
+Content-Disposition: inline
+User-Agent: Mutt/1.3.28i
+.
++OK
+From: Maurice Serges <maumo@free.fr>
+Date: 13 avril 2000
 To: boiteres2004@free.fr
 Subject: Test
 Message-ID: <20041017191721.GA14860@L2TI.univ-paris13.fr>
@@ -59,10 +144,38 @@ To: boiteres2004@free.fr
 Subject: Test
 Message-ID: <20041017191721.GA14860@L2TI.univ-paris13.fr>
 Mime-Version: 1.0
+Content-Type: text/plain
 Content-Disposition: inline
 User-Agent: Mutt/1.3.28i
 
 Ceci est un message au format MIME avec une image jointe. 
 
 .
++OK
+Return-Path: <fourmaux@l2ti.univ-paris13.fr>
+Delivered-To: online.fr-boiteres2004@free.fr
+Received: (qmail 23137 invoked from network); 17 Oct 2004 19:17:21 -0000
+Received: from galilee.univ-paris13.fr (HELO lpl.univ-paris13.fr) (194.254.164.38)
+  by mrelay3-1.free.fr with SMTP; 17 Oct 2004 19:17:21 -0000
+Received: from pirogue.l2ti.univ-paris13.fr (pirogue.l2ti.univ-paris13.fr [194.254.163.182])
+.by lpl.univ-paris13.fr (8.12.10/8.12.10) with ESMTP id i9HJHL6X027011;
+.Sun, 17 Oct 2004 21:17:21 +0200 (CEST)
+Received: from pirogue.l2ti.univ-paris13.fr (localhost [127.0.0.1])
+.by pirogue.l2ti.univ-paris13.fr (8.12.3/8.12.3/Debian-7.1) with ESMTP id i9HJHLkI014924;
+.Sun, 17 Oct 2004 21:17:21 +0200
+Received: (from fourmaux@localhost)
+.by pirogue.l2ti.univ-paris13.fr (8.12.3/8.12.3/Debian-7.1) id i9HJHL9Y014922;
+.Sun, 17 Oct 2004 21:17:21 +0200
+From: Olivier Fourmaux <fourmaux@l2ti.univ-paris13.fr>
+Date: Sun, 17 Oct 2004 21:17:21 +0200
+To: boiteres2004@free.fr
+Subject: Test
+Message-ID: <20041017191721.GA14860@L2TI.univ-paris13.fr>
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Disposition: inline
+User-Agent: Mutt/1.3.28i
 
+Ceci est un message au format MIME avec une image jointe. 
+
+.
