@@ -263,8 +263,8 @@ void refresh(pop*p)
 		//XDrawString(dis, (m->ow_from), popGC, 10, 15, m->from,strlen(m->from));	
 		//XDrawString(dis, (m->ow_date), popGC, 10, 15, m->date,strlen(m->date));
 
-		if(m->cont_win){
-			XDrawString(dis, (m->cont_win), popGC, 10, 15, m->cont_text,strlen(m->cont_text));
+		if(m->contw_txt){
+			graphRefreshMail(m);
 		}
 	}
 }
@@ -317,8 +317,10 @@ void fEnter(XEnterWindowEvent *e, pop*p)
 			changeWindowBgColor(&(m->ow_date), COLOR_HOVER);
 		}
 
-		if(e->window==m->cont_scrl){
+		if(e->window==m->contw_scrl)
+		{
 			printf("Coool\n");
+			XMoveWindow(dis, m->contw_txt, -40, -40);
 		}
 	}
 }

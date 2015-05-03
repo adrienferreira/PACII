@@ -50,14 +50,18 @@ typedef struct mail{
 	char* 	from;
 	char*  date;
 	int is_downloaded;
-	char* mime;
-	char* canonical;
-	char* cont_text;
+
 	Window ow_id;
 	Window ow_from;
 	Window ow_date;
-	Window cont_win;
-	Window cont_scrl;
+
+	char* mime;
+	char* canonical;
+	char* cont_text;
+	Window contw_main;
+	Window contw_txt;
+	Window contw_scrl;
+
 	struct mail *next;
 }mails;
 
