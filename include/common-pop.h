@@ -58,9 +58,11 @@ typedef struct mail{
 	char* mime;
 	char* canonical;
 	char* cont_text;
+	int text_height;
 	Window contw_main;
 	Window contw_txt;
 	Window contw_scrl;
+	Window contw_scrl_curs;
 
 	struct mail *next;
 }mails;

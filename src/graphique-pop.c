@@ -56,14 +56,27 @@ void graphShowMailContent(mails*m)
 		BlackPixel(dis, 0), 
 		BlackPixel(dis, 0)
 	);
+
+	m->contw_scrl_curs = XCreateSimpleWindow(
+		dis, 
+		m->contw_scrl, 
+		1, 
+		1, 
+		SHOWM_SCRLBR_WIDTH-2, 
+		100, 
+		0, 
+		WhitePixel(dis, 0), 
+		WhitePixel(dis, 0)
+	);	
 	
 	XSelectInput(dis, m->contw_main,  ExposureMask|KeyPressMask);
 	XSelectInput(dis, m->contw_txt,  ExposureMask|KeyPressMask);
-	XSelectInput(dis, m->contw_scrl,  ExposureMask|EnterWindowMask |LeaveWindowMask);
-
+	XSelectInput(dis, m->contw_scrl,  ExposureMask|ButtonPress);
+	
 	XMapWindow(dis,m->contw_main);
 	XMapWindow(dis,m->contw_txt);
-	XMapWindow(dis,m->contw_scrl);		
+	XMapWindow(dis,m->contw_scrl);
+	XMapWindow(dis,m->contw_scrl_curs);
 }
 
 void graphRefreshMail(mails*m)
@@ -102,10 +115,30 @@ void graphRefreshMail(mails*m)
 			cursX=SHOWM_TXT_HOFFSET;
 			cursY+=curMaxHeight+SHOWM_TXT_VOFFSET;
 			curMaxHeight = -1;
+			m->text_height+=cursY;
 		}
 
 		XDrawString(dis, m->contw_txt, popGC, cursX, cursY, token,strlen(token));
 		cursX+=xcsTxt.width + spaceWidth;
-		token = strtok(NULL, space);	  
+		token = strtok(NULL, space);
+		if(token)
+			*(token-1) = space[0];	  
 	}	
+}
+
+
+void graphButtonPressScroll(XButtonEvent *e, mails*m)
+{
+	Window root;
+    int x, y;
+    unsigned int width, height;
+    unsigned int border_width;
+    unsigned int depth;
+    int percCurs;
+	
+	XGetGeometry(dis, m->contw_txt, &root, &x, &y, &width, &height, &border_width, &depth);
+
+	percCurs = ((e->y * 100)/height);
+	
+	XMoveWindow(dis, m->contw_txt, x, 0-percCurs);
 }

@@ -65,6 +65,20 @@ void changeWindowBgColor(Window*w,char*colorName)
 	XUnmapWindow(dis, *w);
 	XMapWindow(dis, *w);
 }
+//TODO À supprimer
+void getWindowWidthHeight(Window*w,int*paramWidth,int*paramHeight)
+{
+	Window root;
+    int x, y;
+    unsigned int width, height;
+    unsigned int border_width;
+    unsigned int depth;
+	
+	XGetGeometry(dis, *w, &root, &x, &y, &width, &height, &border_width, &depth);
+
+	*paramWidth = width;
+	*paramHeight = height;
+}
 
 void clickUserPass(pop*p,FILE*fSo,char*user,char*pass)
 {
@@ -155,15 +169,10 @@ void clicList(pop*p,FILE*fSo)
 int getOWFromDateWidth(Window*main)
 {
 	const int MIN_SIZE_WIN = 5;
-
-	Window root;
-    int x, y;
-    unsigned int width, height;
-    unsigned int border_width;
-    unsigned int depth;
+	int width,height;
     int calcWidth;
 	
-	XGetGeometry(dis, *main, &root, &x, &y, &width, &height, &border_width, &depth);
+	getWindowWidthHeight(main,&width,&height);
 	calcWidth = (width - (4*OW_OFFSET) - OW_ID_WIDTH)/2;
 
 	return calcWidth < MIN_SIZE_WIN ? MIN_SIZE_WIN : calcWidth;
@@ -263,9 +272,7 @@ void refresh(pop*p)
 		//XDrawString(dis, (m->ow_from), popGC, 10, 15, m->from,strlen(m->from));	
 		//XDrawString(dis, (m->ow_date), popGC, 10, 15, m->date,strlen(m->date));
 
-		if(m->contw_txt){
-			graphRefreshMail(m);
-		}
+		graphRefreshMail(m);
 	}
 }
 
@@ -301,10 +308,14 @@ void fButtonPress(pop*p,FILE*fSo,XButtonEvent * e)
 				graphShowMailContent(m);
 			}
 		}
+	
+		if(e->window == m->contw_scrl){
+			graphButtonPressScroll(e, m);
+		}
 	}
 }
 
-void fEnter(XEnterWindowEvent *e, pop*p)
+void fEnter(pop*p,XEnterWindowEvent *e)
 {
 	mails*m;
 
@@ -316,16 +327,10 @@ void fEnter(XEnterWindowEvent *e, pop*p)
 			changeWindowBgColor(&(m->ow_from), COLOR_HOVER);
 			changeWindowBgColor(&(m->ow_date), COLOR_HOVER);
 		}
-
-		if(e->window==m->contw_scrl)
-		{
-			printf("Coool\n");
-			XMoveWindow(dis, m->contw_txt, -40, -40);
-		}
 	}
 }
 
-void fLeave(XLeaveWindowEvent *e, pop*p)
+void fLeave(pop*p, XLeaveWindowEvent *e)
 {
 	mails*m;
 		
@@ -545,12 +550,12 @@ int main(int argc,char**argv)
 			{
 				//fLeave(&e.xcrossing, &own);
 				printf("leave\n"); 
-				fLeave(&report.xcrossing,&p);
+				fLeave(&p,&report.xcrossing);
 				break;
 			}
 			case EnterNotify: 
 			{
-				fEnter(&report.xcrossing, &p);
+				fEnter(&p,&report.xcrossing);
 				break;
 			}
 		}

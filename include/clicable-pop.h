@@ -56,5 +56,6 @@ void getOverviewInfo(FILE*fSo,char**from,char**date);
 void drawOverview(pop*p);
 void emptyUserPassBoxes(void);
 void changeWindowBgColor(Window*w,char*colorName);
-void fEnter(XEnterWindowEvent *e, pop*p);
-void fLeave(XLeaveWindowEvent *e, pop*p);
+void getWindowWidthHeight(Window*w,int*paramWidth,int*paramHeight);
+void fEnter( pop*p, XEnterWindowEvent *e);
+void fLeave(pop*p,XLeaveWindowEvent *e);

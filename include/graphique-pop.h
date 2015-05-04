@@ -8,3 +8,4 @@
 void graphLoadMailContent(mails*m);
 void graphShowMailContent(mails*m);
 void graphRefreshMail(mails*m);
+void graphButtonPressScroll(XButtonEvent *e, mails*m);
