@@ -71,12 +71,12 @@ void graphShowMailContent(mails*m)
 	
 	XSelectInput(dis, m->contw_main,  ExposureMask|KeyPressMask);
 	XSelectInput(dis, m->contw_txt,  ExposureMask|KeyPressMask);
-	XSelectInput(dis, m->contw_scrl,  ExposureMask|ButtonPress);
+	XSelectInput(dis, m->contw_scrl,  ExposureMask|ButtonPress|ButtonReleaseMask|ButtonMotionMask);
 	
 	XMapWindow(dis,m->contw_main);
 	XMapWindow(dis,m->contw_txt);
 	XMapWindow(dis,m->contw_scrl);
-	XMapWindow(dis,m->contw_scrl_curs);
+	//XMapWindow(dis,m->contw_scrl_curs);
 }
 
 void graphRefreshMail(mails*m)
@@ -115,7 +115,7 @@ void graphRefreshMail(mails*m)
 			cursX=SHOWM_TXT_HOFFSET;
 			cursY+=curMaxHeight+SHOWM_TXT_VOFFSET;
 			curMaxHeight = -1;
-			m->text_height+=cursY;
+			m->text_height=cursY;
 		}
 
 		XDrawString(dis, m->contw_txt, popGC, cursX, cursY, token,strlen(token));
@@ -129,16 +129,56 @@ void graphRefreshMail(mails*m)
 
 void graphButtonPressScroll(XButtonEvent *e, mails*m)
 {
+	XEvent xe;
+
 	Window root;
     int x, y;
     unsigned int width, height;
     unsigned int border_width;
     unsigned int depth;
+    int posMouse;
     int percCurs;
+    int sizeOffset;
 	
-	XGetGeometry(dis, m->contw_txt, &root, &x, &y, &width, &height, &border_width, &depth);
+    posMouse = e->y;
 
-	percCurs = ((e->y * 100)/height);
-	
-	XMoveWindow(dis, m->contw_txt, x, 0-percCurs);
+	while (1) 
+	{
+		XClearWindow(dis, m->contw_txt);
+		XGetGeometry(dis, m->contw_scrl, &root, &x, &y, &width, &height, &border_width, &depth);
+
+		percCurs = ((posMouse * 100)/height);
+		sizeOffset = (percCurs * (m->text_height)) / 100;
+
+		XResizeWindow(dis, m->contw_txt, SHOWM_WIDTH - SHOWM_SCRLBR_WIDTH, m->text_height);
+		XMoveWindow(dis, m->contw_txt, 1, 0-sizeOffset);
+		graphRefreshMail(m);
+		XMaskEvent(dis, ButtonReleaseMask|ButtonMotionMask,&xe);
+
+		if (xe.type == MotionNotify)
+		{
+			if(xe.xmotion.y<0)
+				posMouse= 0;
+			else
+				if(xe.xmotion.y>SHOWM_HEIGHT)
+					posMouse= SHOWM_HEIGHT;
+				else
+					posMouse= xe.xmotion.y;
+
+		}
+		else{
+			if (xe.type == ButtonRelease) 
+				break;
+		}          
+	}
+
+
+/*
+	w-=(CURSOR_H>>1);
+	if (w<=0)
+	w=1;
+	else { if (w> (COORDCOL(MAXCOLUMN+3)-BORDERLENGTH-(CURSOR_H)))
+	w=(COORDCOL(MAXCOLUMN+3)-BORDERLENGTH-(CURSOR_H));
+	}*/
+	//XResizeWindow(dis, m->contw_scrl_curs, SHOWM_SCRLBR_WIDTH-2, (20 * (m->text_height)) / 100);
 }

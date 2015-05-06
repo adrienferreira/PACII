@@ -542,7 +542,7 @@ int main(int argc,char**argv)
 			case ButtonPress:
 			{
 				fButtonPress(&p,fSo,&report.xbutton);
-				printf("button\n");
+				//printf("button\n");
 				break;
 			}
 			
